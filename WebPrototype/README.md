@@ -9,6 +9,16 @@ This is a companion to the Unreal Engine 5.6 project in the repository root — 
 *feel* the mood and core loop (explore → fight → boss → the world changes) today, while the
 full game is built in Unreal.
 
+## ▶ Play it online (no install)
+
+**https://tiny-tulip-471.higgsfield.gg/**
+
+Just open the link in any browser — desktop or phone. Click/tap once to wake the world
+(that also starts the audio), then press Enter / tap to begin.
+
+> Deployed on Higgsfield. To update the hosted build in place later, re-deploy with
+> `game_id = ce857dfe-18a3-4688-beb6-bedb723687e1` (keeps the same URL).
+
 ## How to play it right now
 
 It's a static page — no build step.
