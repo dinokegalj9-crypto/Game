@@ -110,6 +110,10 @@ natural color grading.
 **Palette:** black, dark grey, dark green, deep blue, muted gold, copper, silver.
 Bright colors are rare and meaningful.
 
+> The full visual identity — color psychology, lighting, architecture, character/enemy/boss
+> design, materials, VFX, UI, typography, and per-region mood boards — is the
+> [**Art Bible**](ArtBible.md). It is the binding source of truth for all art.
+
 ---
 
 ## 6. World Regions
