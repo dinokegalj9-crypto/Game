@@ -1,0 +1,11 @@
+id,role,type,description,size/ratio,style line ref,source
+player,player character sprite (animated procedurally in code),sprite,hooded ragged wandering swordsman in side profile holding a long heavy sword,1:1 -> 128px,STYLE FORMULA,generate
+enemy,corrupted villager enemy sprite,sprite,shambling corrupted plague villager in side profile reaching forward,1:1 -> 128px,STYLE FORMULA,generate
+boss,The Bell Keeper boss sprite,sprite,towering hooded bell-keeper carrying an enormous rusted iron church bell,1:1 -> 320px,STYLE FORMULA,generate
+bg_far,far parallax background layer,background,fog-drowned moor horizon with dead trees and a distant ruined cathedral spire,16:9 -> 1280x720,STYLE FORMULA,generate
+bg_mid,mid parallax background layer,background,graveyard of leaning tombstones and a broken stone church wall in heavy fog,16:9 -> 1280x720,STYLE FORMULA,generate
+ground,tiling ground texture,tile,wet cracked mossy flagstone and dark mud,1:1 -> 256px,STYLE FORMULA,generate
+crown_sigil,corruption meter emblem (UI),ui,ornate broken hollow crown emblem with a single muted-gold glow,1:1 -> 128px,STYLE FORMULA,generate
+ambient,looping ambient music bed,audio,slow oppressive dark-fantasy drone with distant tolling bell and cold wind,~40s loop,STYLE FORMULA,generate
+thumbnail,marketplace cover (delivery card),image,key art of a lone swordsman facing the Bell Keeper across a foggy graveyard,16:9,STYLE FORMULA,generate
+favicon,marketplace icon (delivery card),image,broken hollow crown emblem icon,1:1,STYLE FORMULA,generate

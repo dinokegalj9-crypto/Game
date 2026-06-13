@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>The Hollow Crown — The Weeping Moors</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#070809;
+    font-family:'Times New Roman',Georgia,serif;color:#cdd2cf;-webkit-tap-highlight-color:transparent;}
+  canvas{display:block;touch-action:none;}
+  #dev{position:fixed;top:4px;left:4px;color:#7c8;font:12px monospace;display:none;z-index:9;}
+  #hint{position:fixed;left:50%;bottom:6px;transform:translateX(-50%);font:11px monospace;
+    color:#3a423d;z-index:8;pointer-events:none;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="dev"></div>
+<div id="hint">a dark fantasy slice · headphones recommended</div>
+<script>
+// Permanent CDN locations of the generated assets for this build.
+window.HC_ASSETS = {
+  player:"https://d8j0ntlcm91z4.cloudfront.net/user_3EivvHArDH20rZJATcln7fZ2Olf/hf_20260613_124651_07b4f314-17a2-4bc4-8dd8-e04d701103db.png",
+  enemy:"https://d8j0ntlcm91z4.cloudfront.net/user_3EivvHArDH20rZJATcln7fZ2Olf/hf_20260613_124654_0a2ef824-8433-489d-ae90-99ffe2554743.png",
+  boss:"https://d8j0ntlcm91z4.cloudfront.net/user_3EivvHArDH20rZJATcln7fZ2Olf/hf_20260613_124658_fa3274a9-6296-4bbe-a60e-e0e1c72d4488.png",
+  bg_far:"https://d8j0ntlcm91z4.cloudfront.net/user_3EivvHArDH20rZJATcln7fZ2Olf/hf_20260613_124700_fb79dc37-0edc-47ed-a7ac-54d71bb1a897.png",
+  bg_mid:"https://d8j0ntlcm91z4.cloudfront.net/user_3EivvHArDH20rZJATcln7fZ2Olf/hf_20260613_124704_0fabdbbf-63b5-42ab-8197-d30d3fb7737f.png",
+  ground:"https://d8j0ntlcm91z4.cloudfront.net/user_3EivvHArDH20rZJATcln7fZ2Olf/hf_20260613_124707_abb6c63e-c37d-4571-b823-8e9a37a95fa2.png",
+  crown_sigil:"https://d8j0ntlcm91z4.cloudfront.net/user_3EivvHArDH20rZJATcln7fZ2Olf/hf_20260613_124710_53f8d5d0-47d4-4194-9c55-b8ca1198306f.png",
+  ambient:"https://d8j0ntlcm91z4.cloudfront.net/user_3EivvHArDH20rZJATcln7fZ2Olf/hf_20260613_124715_fb9daad6-d3da-4fed-badf-1e57265638ca.m4a"
+};
+</script>
+<script type="module">
+import { STR } from "./strings.js";
+
+// ───────────────────────────── constants (numbers before code) ──────────────
+const STEP = 1000 / 60;
+const DPR_CAP = 1.5;
+const GROUND_FROM_BOTTOM = 96;
+const LEVEL_END = 4400;
+const PLAYER = {
+  speed: 248, rollSpeed: 540, w: 58, h: 116, maxHp: 100, maxSt: 100,
+  stRegen: 26, stRegenDelay: 0.55,
+  light: { cost: 12, dmg: 9,  poise: 8,  windup: .10, active: .12, recover: .20, reach: 92 },
+  heavy: { cost: 27, dmg: 24, poise: 34, windup: .30, active: .14, recover: .38, reach: 110 },
+  roll:  { cost: 24, iframes: .36, dur: .44 },
+};
+
+// ───────────────────────────── assets ───────────────────────────────────────
+// Assets live on a permanent CDN (this build environment cannot bundle binaries).
+// Backgrounds/ground load plainly (display only). Sprites were generated on a magenta
+// key colour and are chroma-keyed in-browser; if cross-origin pixel access is unavailable
+// the game falls back to styled procedural silhouettes so it always renders.
+const ASSET = window.HC_ASSETS || {};
+const IMG = {};
+const loaded = {};
+const SPRITES = ["player","enemy","boss","crown_sigil"];
+const PLAIN   = ["bg_far","bg_mid","ground"];
+
+function loadPlain(name){
+  return new Promise(res=>{
+    if(!ASSET[name]) { loaded[name]=false; return res(); }
+    const im=new Image();
+    im.onload=()=>{ IMG[name]=im; loaded[name]=true; res(); };
+    im.onerror=()=>{ loaded[name]=false; res(); };
+    im.src=ASSET[name];
+  });
+}
+function keyMagenta(d){
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i],g=d[i+1],b=d[i+2];
+    if(r>140 && b>110 && g<120 && (r-g)>55 && (b-g)>35){ d[i+3]=0; }            // solid key
+    else if(r>110 && b>90 && (r-g)>28 && (b-g)>18){                              // soft fringe
+      d[i+3]=Math.min(d[i+3], Math.max(0,(g-40))*2);
+      d[i]=Math.min(r,g+20); d[i+2]=Math.min(b,g+20);                           // de-pink edge
+    }
+  }
+}
+function loadSprite(name){
+  return new Promise(res=>{
+    if(!ASSET[name]) { loaded[name]=false; return res(); }
+    const im=new Image(); im.crossOrigin="anonymous";
+    im.onload=()=>{
+      try{
+        const c=document.createElement("canvas"); c.width=im.naturalWidth; c.height=im.naturalHeight;
+        const x=c.getContext("2d",{willReadFrequently:true}); x.drawImage(im,0,0);
+        const id=x.getImageData(0,0,c.width,c.height); keyMagenta(id.data); x.putImageData(id,0,0);
+        IMG[name]=c; loaded[name]=true;
+      }catch(e){ loaded[name]=false; } // tainted (no CORS) → procedural fallback
+      res();
+    };
+    im.onerror=()=>{ loaded[name]=false; res(); };
+    im.src=ASSET[name];
+  });
+}
+
+// ───────────────────────────── audio (WebAudio) ─────────────────────────────
+let actx=null, master=null, muted=false, ambient=null;
+function audioInit(){
+  // SFX use WebAudio (synthesized locally). Ambient music is a plain media element so it
+  // plays from the CDN regardless of CORS (WebAudio routing would require CORS headers).
+  if(!actx){ try{
+    actx=new (window.AudioContext||window.webkitAudioContext)();
+    master=actx.createGain(); master.gain.value=.9; master.connect(actx.destination);
+  }catch(e){ actx=null; } }
+  if(actx && actx.state==="suspended") actx.resume();
+  if(!ambient && ASSET.ambient){
+    ambient=new Audio(ASSET.ambient); ambient.loop=true; ambient.volume=0;
+    ambient.play().then(()=>{ const t0=performance.now();
+      const fade=()=>{ if(!ambient||muted) return; const k=Math.min(1,(performance.now()-t0)/3000);
+        ambient.volume=.5*k; if(k<1) requestAnimationFrame(fade); }; fade();
+    }).catch(()=>{});
+  } else if(ambient && ambient.paused && !muted){ ambient.play().catch(()=>{}); }
+}
+function noiseBurst(dur,freq,type,gain,sweep){
+  if(!actx||muted) return;
+  const t=actx.currentTime;
+  const o=actx.createOscillator(), g=actx.createGain();
+  o.type=type||"sawtooth"; o.frequency.setValueAtTime(freq,t);
+  if(sweep) o.frequency.exponentialRampToValueAtTime(Math.max(40,freq*sweep),t+dur);
+  g.gain.setValueAtTime(gain||.2,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+.02);
+}
+const SFX = {
+  swing(){ noiseBurst(.14,520,"triangle",.16,.4); },
+  heavy(){ noiseBurst(.22,300,"sawtooth",.20,.5); },
+  hit(){ noiseBurst(.10,180,"square",.22,.6); },
+  hurt(){ noiseBurst(.20,140,"sawtooth",.22,.5); },
+  roll(){ noiseBurst(.16,240,"sine",.12,1.6); },
+  bell(){ if(!actx||muted)return; const t=actx.currentTime;
+    [220,330,440,587].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();
+      o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(.0001,t);
+      g.gain.linearRampToValueAtTime(.18/(i+1),t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+1.8);
+      o.connect(g);g.connect(master);o.start(t);o.stop(t+1.9);}); },
+  die(){ noiseBurst(.5,200,"sawtooth",.22,.25); },
+  win(){ if(!actx||muted)return; const t=actx.currentTime;
+    [330,392,494].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();
+      o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(.0001,t+i*.18);
+      g.gain.linearRampToValueAtTime(.16,t+i*.18+.05);g.gain.exponentialRampToValueAtTime(.0001,t+i*.18+1.4);
+      o.connect(g);g.connect(master);o.start(t+i*.18);o.stop(t+i*.18+1.5);}); },
+};
+function toggleMute(){ muted=!muted;
+  if(ambient){ if(muted) ambient.pause(); else { ambient.volume=.5; ambient.play().catch(()=>{}); } } }
+
+// ───────────────────────────── input ────────────────────────────────────────
+const BIND = { KeyA:"left",ArrowLeft:"left", KeyD:"right",ArrowRight:"right",
+  KeyJ:"light", KeyK:"heavy", Space:"roll", ShiftLeft:"roll", ShiftRight:"roll" };
+const held = new Set();
+const edge = [];           // one-shot actions consumed by update
+function press(cmd){ if(cmd==="light"||cmd==="heavy"||cmd==="roll") edge.push(cmd); held.add(cmd); }
+addEventListener("keydown",e=>{
+  if(e.repeat){ if(BIND[e.code]) e.preventDefault(); return; }
+  if(e.code==="KeyM"){ toggleMute(); return; }
+  if(e.code==="Enter"){ edge.push("confirm"); }
+  if(e.code==="KeyP"){ edge.push("pause"); }
+  const c=BIND[e.code]; if(c){ press(c); e.preventDefault(); }
+});
+addEventListener("keyup",e=>{ const c=BIND[e.code]; if(c) held.delete(c); });
+addEventListener("mousedown",e=>{ audioInit(); if(state==="title"||state==="dead"||state==="win"){edge.push("confirm");return;}
+  if(e.button===0) press("light"); else if(e.button===2) press("heavy"); });
+addEventListener("contextmenu",e=>e.preventDefault());
+
+// touch — left half: drag to move; right half: 3 action buttons
+let isTouch = ("ontouchstart" in window) || navigator.maxTouchPoints>0;
+const tbtns = {}; // computed in resize
+function touchAt(x,y){
+  if(state!=="play"){ edge.push("confirm"); return; }
+  if(x < innerWidth*0.5){ held.add(x < innerWidth*0.25 ? "left":"right"); held.add("_moveTouch"); }
+  else {
+    for(const k in tbtns){ const b=tbtns[k];
+      if(x>=b.x&&x<=b.x+b.s&&y>=b.y&&y<=b.y+b.s){ press(k); } }
+  }
+}
+addEventListener("touchstart",e=>{ audioInit();
+  for(const t of e.changedTouches) touchAt(t.clientX,t.clientY);
+  e.preventDefault(); },{passive:false});
+addEventListener("touchmove",e=>{
+  held.delete("left"); held.delete("right");
+  for(const t of e.touches){ if(t.clientX<innerWidth*0.5)
+    held.add(t.clientX<innerWidth*0.25?"left":"right"); }
+  e.preventDefault(); },{passive:false});
+addEventListener("touchend",e=>{ held.delete("left"); held.delete("right"); held.delete("_moveTouch");
+  e.preventDefault(); },{passive:false});
+
+let padPrev = {};
+function pollPad(){
+  const pads = navigator.getGamepads?.()??[];
+  for(const gp of pads){ if(!gp) continue;
+    const ax = gp.axes[0]||0;
+    if(ax<-.35) held.add("left"); else held.delete("left");
+    if(ax>.35) held.add("right"); else held.delete("right");
+    if(gp.buttons[14]?.pressed) held.add("left");
+    if(gp.buttons[15]?.pressed) held.add("right");
+    const map = {0:"roll",2:"light",3:"heavy",1:"heavy",9:"pause"};
+    for(const i in map){ const now=!!gp.buttons[i]?.pressed;
+      if(now&&!padPrev[i]) { if(map[i]==="pause") edge.push("pause"); else press(map[i]); if(state!=="play") edge.push("confirm"); }
+      padPrev[i]=now; }
+  }
+}
+
+// ───────────────────────────── canvas ───────────────────────────────────────
+const canvas=document.getElementById("c"), ctx=canvas.getContext("2d");
+let W=0,H=0,groundY=0;
+function resize(){
+  const dpr=Math.min(devicePixelRatio||1,DPR_CAP);
+  W=innerWidth; H=innerHeight;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+"px"; canvas.style.height=H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  groundY = H-GROUND_FROM_BOTTOM;
+  const s=Math.min(96,Math.max(64,H*0.12));
+  const by=H-s-16, rx=W-s-16;
+  tbtns.light={x:rx-s*2.3,y:by,s,label:"⚔"};
+  tbtns.heavy={x:rx-s*1.15,y:by-s*0.5,s,label:"☥"};
+  tbtns.roll ={x:rx,y:by,s,label:"➤"};
+}
+addEventListener("resize",resize); addEventListener("orientationchange",resize); resize();
+
+// ───────────────────────────── rng + helpers ────────────────────────────────
+let seed=1337; function rng(){ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; }
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+
+// ───────────────────────────── world / parallax ─────────────────────────────
+let cam=0;
+const fogPuffs=[]; for(let i=0;i<26;i++) fogPuffs.push({x:rng()*4800,y:rng(),r:120+rng()*220,s:6+rng()*16,a:.04+rng()*.07});
+let grain=null;
+function makeGrain(){ const gc=document.createElement("canvas"); gc.width=gc.height=128;
+  const g=gc.getContext("2d"); const id=g.createImageData(128,128);
+  for(let i=0;i<id.data.length;i+=4){ const v=200+Math.random()*55|0;
+    id.data[i]=id.data[i+1]=id.data[i+2]=v; id.data[i+3]=14; }
+  g.putImageData(id,0,0); grain=gc; }
+makeGrain();
+
+// ───────────────────────────── entities ─────────────────────────────────────
+let player, enemies, shocks, particles, boss, gates, activeGate, guide, guideT;
+let corruption=0, corruptStage=0, screenShake=0, hitStop=0, flash=0, tint=0;
+
+function resetGame(){
+  cam=0; corruption=0; corruptStage=0; screenShake=0; hitStop=0; flash=0; tint=0; seed=1337;
+  enemies=[]; shocks=[]; particles=[]; boss=null; guide=STR.guideMoor; guideT=4;
+  player={ x:260, y:groundY, vx:0, hp:PLAYER.maxHp, st:PLAYER.maxSt, face:1,
+    atk:null, atkTimer:0, hitDone:false, rolling:0, iframe:0, stDelay:0, dead:false, hurtT:0 };
+  // gated encounters along the moor, then the boss arena
+  gates=[
+    { x:760,  spawned:false, cleared:false, make:()=>[mkEnemy(980),mkEnemy(1140)], guide:STR.guideEnemy },
+    { x:1700, spawned:false, cleared:false, make:()=>[mkEnemy(1900),mkEnemy(2040),mkEnemy(2180)], guide:STR.guideEnemy },
+    { x:2700, spawned:false, cleared:false, make:()=>[mkEnemy(2900),mkEnemy(3030),mkEnemy(3160),mkEnemy(3290)], guide:STR.guideEnemy },
+    { x:3700, spawned:false, cleared:false, boss:true, guide:STR.guideBoss },
+  ];
+  activeGate=null;
+}
+function mkEnemy(x){ return { x, y:groundY, hp:30, vx:0, face:-1, w:54,h:104,
+  atk:0, atkCd:.6+rng(), windup:0, hitDone:false, stagger:0, dead:false, dieT:0 }; }
+function mkBoss(x){ return { x, y:groundY, hp:560, maxHp:560, w:150, h:230, face:-1,
+  phase:1, action:"idle", t:1.2, telegraph:0, hitDone:false, stagger:0, staggerT:0,
+  vx:0, dead:false, dieT:0, intro:2.2 }; }
+
+// ───────────────────────────── combat ───────────────────────────────────────
+function startAttack(kind){
+  if(player.atk||player.rolling>0||player.dead) return;
+  const def=PLAYER[kind];
+  if(player.st<def.cost) return;
+  player.st-=def.cost; player.stDelay=PLAYER.stRegenDelay;
+  player.atk=kind; player.atkTimer=0; player.hitDone=false;
+  kind==="heavy"?SFX.heavy():SFX.swing();
+}
+function startRoll(){
+  if(player.rolling>0||player.dead) return;
+  if(player.st<PLAYER.roll.cost) return;
+  player.st-=PLAYER.roll.cost; player.stDelay=PLAYER.stRegenDelay;
+  player.rolling=PLAYER.roll.dur; player.iframe=PLAYER.roll.iframes; SFX.roll();
+}
+function playerAttackBox(){
+  if(!player.atk) return null;
+  const def=PLAYER[player.atk];
+  if(player.atkTimer<def.windup||player.atkTimer>def.windup+def.active) return null;
+  const reach=def.reach;
+  return { x: player.face>0?player.x:player.x-reach, y:player.y-PLAYER.h, w:reach, h:PLAYER.h, def };
+}
+function hurtPlayer(dmg){
+  if(player.iframe>0||player.dead) return;
+  player.hp-=dmg; player.hurtT=.3; screenShake=Math.max(screenShake,10); flash=Math.max(flash,.5); SFX.hurt();
+  if(player.hp<=0){ player.hp=0; player.dead=true; SFX.die(); setState("dead"); }
+}
+function addCorruption(v){
+  corruption=clamp(corruption+v,0,100);
+  const stg = corruption>=90?4:corruption>=70?3:corruption>=45?2:corruption>=20?1:0;
+  if(stg>corruptStage){ corruptStage=stg; flash=Math.max(flash,.6); tint=Math.min(1,tint+.18); }
+}
+function burst(x,y,n,col){ for(let i=0;i<n;i++) particles.push({x,y:y-rng()*60-20,
+  vx:(rng()-.5)*260,vy:-rng()*220-40,life:.5+rng()*.5,col}); }
+
+// ───────────────────────────── update ───────────────────────────────────────
+function update(dtms){
+  const dt=dtms/1000;
+  pollPad();
+  // consume edge actions
+  let confirm=false,pause=false;
+  while(edge.length){ const a=edge.shift();
+    if(a==="confirm") confirm=true; else if(a==="pause") pause=true;
+    else if(state==="play"){ if(a==="light") startAttack("light");
+      else if(a==="heavy") startAttack("heavy"); else if(a==="roll") startRoll(); } }
+
+  if(state==="title"){ if(confirm){ audioInit(); resetGame(); setState("play"); } titleT+=dt; return; }
+  if(state==="dead"||state==="win"){ endT+=dt; if(confirm){ if(state==="win"){ setState("title"); } else { resetGame(); setState("play"); } } return; }
+  if(pause){ paused=!paused; }
+  if(paused) return;
+
+  // timers
+  if(hitStop>0){ hitStop-=dtms; return; }
+  if(screenShake>0) screenShake=Math.max(0,screenShake-dt*40);
+  if(flash>0) flash=Math.max(0,flash-dt*1.8);
+  if(guideT>0) guideT-=dt;
+
+  // ── player movement
+  let dir=0; if(held.has("left"))dir-=1; if(held.has("right"))dir+=1;
+  if(player.rolling>0){
+    player.rolling-=dt; player.iframe=Math.max(0,player.iframe-dt);
+    player.x += player.face*PLAYER.rollSpeed*dt;
+  } else {
+    player.iframe=Math.max(0,player.iframe-dt);
+    if(dir!==0 && !player.atk){ player.face=dir; player.x+=dir*PLAYER.speed*dt; }
+  }
+  // forward gate lock
+  let maxX = activeGate ? (activeGate.boss? activeGate.bossWallR : activeGate.x+30) : LEVEL_END;
+  let minX = activeGate ? (activeGate.boss? activeGate.bossWallL : 60) : 60;
+  player.x=clamp(player.x, minX, maxX);
+
+  // attack progression
+  if(player.atk){ player.atkTimer+=dt; const def=PLAYER[player.atk];
+    if(player.atkTimer>=def.windup+def.active+def.recover){ player.atk=null; } }
+
+  // stamina regen
+  if(player.stDelay>0) player.stDelay-=dt;
+  else if(player.st<PLAYER.maxSt) player.st=Math.min(PLAYER.maxSt, player.st+PLAYER.stRegen*dt);
+  if(player.hurtT>0) player.hurtT-=dt;
+
+  // camera follows, clamped to level / arena
+  const targetCam = clamp(player.x - W*0.36, 0, Math.max(0, (activeGate&&activeGate.boss?activeGate.bossWallR+W*0.2:LEVEL_END) - W));
+  cam = lerp(cam, targetCam, .12);
+
+  // ── gates / spawning
+  for(const g of gates){
+    if(!g.spawned && player.x>=g.x){
+      g.spawned=true; activeGate=g; guide=g.guide; guideT=3.5;
+      if(g.boss){ g.bossWallL=g.x-W*0.1; g.bossWallR=g.x+860; boss=mkBoss(g.x+560); SFX.bell(); }
+      else { for(const e of g.make()) enemies.push(e); }
+    }
+  }
+  if(activeGate && !activeGate.cleared){
+    if(activeGate.boss){ if(boss&&boss.dead&&boss.dieT<=0){ activeGate.cleared=true; activeGate=null; } }
+    else if(enemies.every(e=>e.dead)){ activeGate.cleared=true; activeGate=null;
+      guide=STR.guideMoor; guideT=3; }
+  }
+
+  // ── enemies
+  const pbox=playerAttackBox();
+  for(const e of enemies){
+    if(e.dead){ if(e.dieT>0) e.dieT-=dt; continue; }
+    const dx=player.x-e.x; e.face=dx<0?-1:1;
+    if(e.stagger>0){ e.stagger-=dt; }
+    else if(e.windup>0){ e.windup-=dt;
+      if(e.windup<=0){ // lunge strike
+        if(Math.abs(dx)<92 && Math.abs(player.y-e.y)<10) hurtPlayer(12);
+      }
+    } else {
+      if(Math.abs(dx)>70){ e.x+=Math.sign(dx)*70*dt; }
+      else { e.atkCd-=dt; if(e.atkCd<=0){ e.windup=.45; e.atkCd=1.1+rng()*.7; } }
+    }
+    // taking hits
+    if(pbox && !player.hitDone){
+      if(e.x> pbox.x-30 && e.x<pbox.x+pbox.w+30){
+        e.hp-=pbox.def.dmg; e.stagger=Math.max(e.stagger,pbox.def.poise>20?.6:.18);
+        e.windup=0; burst(e.x,e.y,8,"#9bae9b"); SFX.hit();
+        hitStop=Math.max(hitStop,pbox.def===PLAYER.heavy?70:35); screenShake=Math.max(screenShake,6);
+        if(e.hp<=0){ e.dead=true; e.dieT=.6; burst(e.x,e.y,18,"#6b7d6b"); addCorruption(4); }
+      }
+    }
+    // contact damage while charging into player
+    if(Math.abs(dx)<46 && Math.abs(player.y-e.y)<8 && e.windup<=0 && e.stagger<=0) {/* handled by lunge */}
+  }
+  if(pbox) player.hitDone = true; // one hit per swing: active window lands once
+
+  // ── boss
+  if(boss && !boss.dead) updateBoss(dt,pbox);
+  else if(boss && boss.dead && boss.dieT>0){ boss.dieT-=dt;
+    if(boss.dieT<=0){ onBossDefeated(); } }
+
+  // ── shockwaves
+  for(const s of shocks){ s.x+=s.vx*dt; s.life-=dt; s.r+=s.grow*dt;
+    if(player.iframe<=0 && Math.abs((s.ring?Math.abs(player.x-s.x)-s.r:player.x-s.x))< (s.ring?26:s.w) && Math.abs(player.y-s.y)<8)
+      hurtPlayer(s.dmg), s.life=Math.min(s.life,0.0001); }
+  shocks=shocks.filter(s=>s.life>0);
+
+  // ── particles
+  for(const p of particles){ p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=900*dt; }
+  particles=particles.filter(p=>p.life>0);
+
+  // fog drift
+  for(const f of fogPuffs){ f.x-=f.s*dt; if(f.x<cam-400) f.x=cam+W+rng()*300; }
+}
+
+function updateBoss(dt,pbox){
+  if(boss.intro>0){ boss.intro-=dt; return; }
+  const dx=player.x-boss.x; boss.face=dx<0?-1:1;
+  if(boss.phase===1 && boss.hp<boss.maxHp*0.5){ boss.phase=2; flash=.5; screenShake=12; SFX.bell(); }
+  if(boss.staggerT>0){ boss.staggerT-=dt;
+    // open window: take extra damage
+  } else {
+    boss.t-=dt*(boss.phase===2?1.25:1);
+    if(boss.action==="idle"){
+      // approach a bit, then pick an attack
+      if(Math.abs(dx)>220) boss.x+=Math.sign(dx)*60*dt;
+      if(boss.t<=0){ const r=rng();
+        boss.action = r<.42?"slam": r<.78?"toll":"sweep";
+        boss.telegraph = boss.action==="toll"?.9:.6; boss.hitDone=false; }
+    } else {
+      boss.telegraph-=dt;
+      if(boss.telegraph<=0){
+        if(boss.action==="slam"){ // ground shockwaves both directions
+          SFX.bell(); screenShake=14;
+          shocks.push({x:boss.x,y:groundY,vx:-520,grow:0,r:0,w:34,dmg:22,life:1.4,ring:false,col:"#caa14a"});
+          shocks.push({x:boss.x,y:groundY,vx:520,grow:0,r:0,w:34,dmg:22,life:1.4,ring:false,col:"#caa14a"});
+        } else if(boss.action==="toll"){ // expanding ring — roll through it
+          SFX.bell(); screenShake=10;
+          shocks.push({x:boss.x,y:groundY,vx:0,grow:560,r:30,w:0,dmg:26,life:1.2,ring:true,col:"#caa14a"});
+        } else { // sweep — quick lunge
+          boss.x+=boss.face*70; if(Math.abs(player.x-boss.x)<150&&player.iframe<=0) hurtPlayer(18); SFX.hit(); screenShake=8;
+        }
+        boss.action="idle"; boss.t=boss.phase===2?1.0:1.6;
+      }
+    }
+  }
+  // boss takes hits
+  if(pbox && !boss.hitDone){
+    if(boss.x> pbox.x-90 && boss.x<pbox.x+pbox.w+90){
+      const mult = boss.staggerT>0?1.8:1;
+      boss.hp-=pbox.def.dmg*mult; boss.stagger+=pbox.def.poise;
+      burst(player.x+player.face*80, boss.y,10,"#caa14a"); SFX.hit();
+      hitStop=Math.max(hitStop, pbox.def===PLAYER.heavy?80:40); screenShake=Math.max(screenShake,7);
+      boss.hitDone=true;
+      if(boss.stagger>=100 && boss.staggerT<=0){ boss.staggerT=2.2; boss.stagger=0; boss.action="idle"; flash=.3; }
+      if(boss.hp<=0){ boss.hp=0; boss.dead=true; boss.dieT=2.4; screenShake=20; flash=1; }
+    }
+  }
+  if(player.atk===null) boss.hitDone=false;
+}
+
+function onBossDefeated(){
+  addCorruption(28); SFX.win(); tint=Math.min(1,tint+.25);
+  setState("win");
+}
+
+// ───────────────────────────── render ───────────────────────────────────────
+function drawImgOr(name, x,y,w,h, fallback){
+  if(loaded[name] && IMG[name]) ctx.drawImage(IMG[name],x,y,w,h);
+  else fallback&&fallback(x,y,w,h);
+}
+// Hooded-figure silhouette used as a graceful fallback when a sprite can't be keyed.
+function fig(x,y,w,h,col,glow){
+  ctx.save();
+  if(glow){ ctx.shadowColor=glow; ctx.shadowBlur=14; }
+  ctx.fillStyle=col;
+  const cx=x+w/2, hood=h*0.26;
+  ctx.beginPath();
+  ctx.moveTo(cx, y);                                   // crown of hood
+  ctx.quadraticCurveTo(x+w*0.05, y+hood, x+w*0.18, y+h); // left robe sweep
+  ctx.lineTo(x+w*0.82, y+h);                            // hem
+  ctx.quadraticCurveTo(x+w*0.95, y+hood, cx, y);        // right robe sweep
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle="rgba(0,0,0,.55)";                      // shadowed face hollow
+  ctx.beginPath(); ctx.ellipse(cx, y+hood*0.9, w*0.16, hood*0.5, 0, 0, 7); ctx.fill();
+  ctx.restore();
+}
+function render(){
+  ctx.clearRect(0,0,W,H);
+  // sky gradient
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,"#12161a"); sky.addColorStop(.55,"#0d1114"); sky.addColorStop(1,"#070a0b");
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+
+  // far parallax
+  const fx=-(cam*0.25)%W;
+  if(loaded.bg_far){ ctx.globalAlpha=.9; ctx.drawImage(IMG.bg_far,fx,0,W,H); ctx.drawImage(IMG.bg_far,fx+W,0,W,H);
+    ctx.drawImage(IMG.bg_far,fx-W,0,W,H); ctx.globalAlpha=1; }
+  // mid parallax — lower band only so the far sky shows above
+  if(loaded.bg_mid){ const mx=-(cam*0.5)%W; const bandH=H*0.55, sy=IMG.bg_mid.height*0.45, sh=IMG.bg_mid.height*0.55;
+    ctx.globalAlpha=.92;
+    for(const k of [-1,0,1]){ ctx.drawImage(IMG.bg_mid,0,sy,IMG.bg_mid.width,sh, mx+k*W,H-bandH,W,bandH); }
+    ctx.globalAlpha=1;
+  } else { ctx.fillStyle="#0a0d0e"; ctx.fillRect(0,groundY-120,W,120); }
+
+  // ground
+  if(loaded.ground){ const tw=140; const gx=-(cam%tw);
+    for(let x=gx-tw;x<W+tw;x+=tw){ ctx.drawImage(IMG.ground,x,groundY,tw,GROUND_FROM_BOTTOM+20); } }
+  else { ctx.fillStyle="#0c0f0d"; ctx.fillRect(0,groundY,W,H-groundY); }
+  ctx.fillStyle="rgba(0,0,0,.5)"; ctx.fillRect(0,groundY,W,3);
+
+  ctx.save(); ctx.translate(-cam,0);
+
+  // shockwaves
+  for(const s of shocks){ ctx.save();
+    ctx.globalAlpha=clamp(s.life,0,1)*.8; ctx.strokeStyle=s.col; ctx.lineWidth=6; ctx.shadowColor=s.col; ctx.shadowBlur=18;
+    if(s.ring){ ctx.beginPath(); ctx.arc(s.x,groundY-6,s.r,Math.PI*1.05,Math.PI*1.95); ctx.stroke(); }
+    else { ctx.fillStyle=s.col; ctx.fillRect(s.x-s.w/2, groundY-44, s.w, 44); }
+    ctx.restore(); }
+
+  // enemies
+  for(const e of enemies){ if(e.dead && e.dieT<=0) continue;
+    drawEntity("enemy", e.x, e.y, e.w, e.h, e.face,
+      { dead:e.dead, dieT:e.dieT, windup:e.windup, stagger:e.stagger, fallbackCol:"#5d6b58" }); }
+
+  // boss
+  if(boss){ drawBoss(); }
+
+  // player
+  drawPlayer();
+
+  // particles
+  for(const p of particles){ ctx.globalAlpha=clamp(p.life,0,1); ctx.fillStyle=p.col;
+    ctx.fillRect(p.x-2,p.y-2,4,4); } ctx.globalAlpha=1;
+
+  // drifting fog volumes
+  for(const f of fogPuffs){ const g=ctx.createRadialGradient(f.x,groundY-f.y*H*.5,0,f.x,groundY-f.y*H*.5,f.r);
+    g.addColorStop(0,`rgba(150,165,160,${f.a})`); g.addColorStop(1,"rgba(150,165,160,0)");
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(f.x,groundY-f.y*H*.5,f.r,0,7); ctx.fill(); }
+
+  ctx.restore();
+
+  // foreground fog wash near camera bottom
+  const fg=ctx.createLinearGradient(0,groundY-160,0,H);
+  fg.addColorStop(0,"rgba(120,135,130,0)"); fg.addColorStop(1,"rgba(120,135,130,.16)");
+  ctx.fillStyle=fg; ctx.fillRect(0,groundY-160,W,H-groundY+160);
+
+  // corruption tint
+  if(tint>0){ ctx.fillStyle=`rgba(70,30,40,${tint*0.16})`; ctx.fillRect(0,0,W,H); }
+  // vignette
+  const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.7);
+  vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(0,0,0,.6)");
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+  // film grain
+  if(grain){ ctx.globalAlpha=.5; const p=ctx.createPattern(grain,"repeat"); ctx.fillStyle=p; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
+  // hit flash
+  if(flash>0){ ctx.fillStyle=`rgba(${tint>0?'120,40,40':'200,210,210'},${flash*0.4})`; ctx.fillRect(0,0,W,H); }
+
+  if(state==="play"){ drawHUD(); if(isTouch) drawTouch(); if(paused) drawCenter(STR.paused,""); }
+  else if(state==="title") drawTitle();
+  else if(state==="dead") drawEnd(STR.deathTitle, [STR.deathSub], "#b04a4a");
+  else if(state==="win") drawWin();
+}
+
+function screenX(wx){ return wx - cam; }
+function drawEntity(name,wx,wy,w,h,face,opt){
+  ctx.save();
+  let alpha=1, skew=0;
+  if(opt.dead){ alpha=clamp(opt.dieT/0.6,0,1); ctx.translate(wx, wy); ctx.rotate((1-alpha)*0.6*face); ctx.translate(-wx,-wy); }
+  if(opt.windup>0){ ctx.translate(wx,wy); ctx.scale(1+0.06*Math.sin(performance.now()/40),1); ctx.translate(-wx,-wy);
+    ctx.shadowColor="#caa14a"; ctx.shadowBlur=14; }
+  ctx.globalAlpha=alpha;
+  const dx=wx-w/2, dy=wy-h;
+  if(face<0){ ctx.translate(wx,0); ctx.scale(-1,1); ctx.translate(-wx,0); }
+  drawImgOr(name, dx,dy,w,h,(x,y,ww,hh)=>fig(x,y,ww,hh, opt.fallbackCol||"#5d6b58"));
+  ctx.restore();
+}
+function drawPlayer(){
+  const p=player; ctx.save();
+  let bob = (!p.atk && p.rolling<=0 && (held.has("left")||held.has("right"))) ? Math.sin(performance.now()/90)*4 : 0;
+  let rot=0, scaleY=1;
+  if(p.rolling>0){ rot = p.face*(1-p.rolling/PLAYER.roll.dur)*Math.PI*2; }
+  let lunge=0;
+  if(p.atk){ const def=PLAYER[p.atk]; const ph=p.atkTimer/(def.windup+def.active+def.recover);
+    lunge = Math.sin(clamp((p.atkTimer-def.windup)/ (def.active+0.05),0,1)*Math.PI)*(p.atk==="heavy"?34:20); }
+  const wx=p.x+p.face*lunge, wy=p.y+bob;
+  if(p.iframe>0) ctx.globalAlpha=.55;
+  if(rot){ ctx.translate(wx,wy-PLAYER.h*0.5); ctx.rotate(rot); ctx.translate(-wx,-(wy-PLAYER.h*0.5)); }
+  // cold rim light glow
+  ctx.shadowColor=p.hurtT>0?"#b04a4a":"#3b5566"; ctx.shadowBlur=p.hurtT>0?20:12;
+  const dx=wx-PLAYER.w/2, dy=wy-PLAYER.h;
+  if(p.face<0){ ctx.translate(wx,0); ctx.scale(-1,1); ctx.translate(-wx,0); }
+  drawImgOr("player",dx,dy,PLAYER.w,PLAYER.h,(x,y,w,h)=>fig(x,y,w,h,"#9aa39c","#3b5566"));
+  ctx.restore();
+  // attack arc swoosh, drawn in world space (no flip active here)
+  const box=playerAttackBox();
+  if(box){ ctx.save(); ctx.globalAlpha=.45; ctx.strokeStyle=p.atk==="heavy"?"#caa14a":"#aeb8b2";
+    ctx.lineWidth= p.atk==="heavy"?5:3; ctx.lineCap="round";
+    const ax=p.x, ay=p.y-PLAYER.h*0.55, r=box.def.reach*0.85;
+    ctx.beginPath();
+    if(p.face>0) ctx.arc(ax,ay,r,-1.0,0.8);
+    else         ctx.arc(ax,ay,r,Math.PI-0.8,Math.PI+1.0);
+    ctx.stroke(); ctx.restore(); }
+}
+function drawBoss(){
+  const b=boss; ctx.save();
+  let alpha=1;
+  if(b.dead){ alpha=clamp(b.dieT/2.4,0,1); }
+  if(b.intro>0){ alpha=clamp(1-b.intro/2.2+0.2,0,1); }
+  if(b.telegraph>0){ ctx.shadowColor="#caa14a"; ctx.shadowBlur=30*(1-b.telegraph); }
+  if(b.staggerT>0){ ctx.shadowColor="#cf9b3a"; ctx.shadowBlur=24; }
+  ctx.globalAlpha=alpha;
+  const wx=b.x, wy=b.y, w=b.w, h=b.h, dx=wx-w/2, dy=wy-h;
+  if(b.face<0){ ctx.translate(wx,0); ctx.scale(-1,1); ctx.translate(-wx,0); }
+  drawImgOr("boss",dx,dy,w,h,(x,y,ww,hh)=>{ fig(x,y,ww,hh,"#3f4742","#caa14a");
+    ctx.save(); ctx.fillStyle="#caa14a"; ctx.shadowColor="#caa14a"; ctx.shadowBlur=22;
+    ctx.beginPath(); ctx.arc(x+ww*0.5,y+hh*0.62,ww*0.16,0,7); ctx.fill(); ctx.restore(); });
+  ctx.restore();
+}
+
+// ───────────────────────────── HUD ──────────────────────────────────────────
+function bar(x,y,w,h,frac,col,bg){ ctx.fillStyle=bg||"rgba(0,0,0,.55)"; ctx.fillRect(x-2,y-2,w+4,h+4);
+  ctx.fillStyle="#15110c"; ctx.fillRect(x,y,w,h); ctx.fillStyle=col; ctx.fillRect(x,y,w*clamp(frac,0,1),h);
+  ctx.strokeStyle="rgba(0,0,0,.7)"; ctx.lineWidth=1; ctx.strokeRect(x-2.5,y-2.5,w+5,h+5); }
+function drawHUD(){
+  ctx.textBaseline="top"; ctx.textAlign="left";
+  bar(22,22,Math.min(300,W*0.4),16, player.hp/PLAYER.maxHp, "#9c2b2b");
+  bar(22,46,Math.min(240,W*0.32),10, player.st/PLAYER.maxSt, "#3f6f5a");
+  ctx.fillStyle="#5b635d"; ctx.font="11px monospace";
+  ctx.fillText(STR.hudHealth,24,4);
+  // corruption sigil + meter (top-right)
+  const cs=44, cx=W-cs-22, cy=20;
+  drawImgOr("crown_sigil",cx,cy,cs,cs,(x,y,w,h)=>{ ctx.fillStyle="#caa14a"; ctx.fillRect(x+w*.2,y+h*.4,w*.6,h*.4); });
+  bar(W-22-160, cy+cs+6, 160, 8, corruption/100, "#8d6bd6");
+  ctx.textAlign="right"; ctx.fillStyle="#6b6270"; ctx.font="10px monospace";
+  ctx.fillText(STR.hudCorruption+" · "+STR.corruptStage[corruptStage], W-22, cy+cs+18);
+  ctx.textAlign="left";
+  // boss bar
+  if(boss && !(boss.dead&&boss.dieT<=0) && boss.intro<=1.6){
+    const bw=Math.min(620,W*0.7), bx=(W-bw)/2, by=H-44;
+    bar(bx,by,bw,14, boss.hp/boss.maxHp, boss.staggerT>0?"#cf9b3a":"#7a1f1f");
+    ctx.textAlign="center"; ctx.fillStyle="#b9a98a"; ctx.font="14px 'Times New Roman',serif";
+    ctx.fillText(STR.bossName, W/2, by-20); ctx.textAlign="left";
+  }
+  // guide text
+  if(guideT>0){ ctx.globalAlpha=clamp(guideT,0,1); ctx.textAlign="center";
+    ctx.fillStyle="#8a948c"; ctx.font="italic 18px 'Times New Roman',serif";
+    ctx.fillText(guide, W/2, H*0.28); ctx.globalAlpha=1; ctx.textAlign="left"; }
+}
+function drawTouch(){
+  ctx.save(); ctx.globalAlpha=.18; ctx.fillStyle="#cdd2cf";
+  // move zones hint
+  ctx.fillRect(8,H-70,54,54); ctx.fillRect(70,H-70,54,54);
+  for(const k in tbtns){ const b=tbtns[k];
+    ctx.beginPath(); ctx.arc(b.x+b.s/2,b.y+b.s/2,b.s/2,0,7); ctx.fill(); }
+  ctx.globalAlpha=.6; ctx.fillStyle="#0a0c0b"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.font=`${Math.floor(tbtns.light.s*0.4)}px serif`;
+  ctx.fillText("‹",35,H-43); ctx.fillText("›",97,H-43);
+  for(const k in tbtns){ const b=tbtns[k]; ctx.fillText(b.label,b.x+b.s/2,b.y+b.s/2); }
+  ctx.restore(); ctx.textBaseline="top";
+}
+function drawCenter(t,s){ ctx.save(); ctx.fillStyle="rgba(0,0,0,.55)"; ctx.fillRect(0,0,W,H);
+  ctx.textAlign="center"; ctx.fillStyle="#cdd2cf"; ctx.font="42px 'Times New Roman',serif";
+  ctx.fillText(t,W/2,H/2-20); ctx.font="16px monospace"; ctx.fillStyle="#7a827c"; ctx.fillText(s,W/2,H/2+34);
+  ctx.restore(); ctx.textAlign="left"; }
+
+function drawTitle(){
+  ctx.save(); ctx.textAlign="center";
+  const a=clamp(titleT/1.5,0,1); ctx.globalAlpha=a;
+  ctx.fillStyle="#cdbb86"; ctx.shadowColor="#caa14a"; ctx.shadowBlur=18;
+  ctx.font=`${Math.min(72,W*0.11)}px 'Times New Roman',serif`;
+  ctx.fillText(STR.title, W/2, H*0.3); ctx.shadowBlur=0;
+  ctx.fillStyle="#8a948c"; ctx.font="italic 18px 'Times New Roman',serif";
+  ctx.fillText(STR.tagline, W/2, H*0.3+Math.min(72,W*0.11)*0.7);
+  ctx.fillStyle="#6f777180"; ctx.font="15px monospace"; ctx.fillStyle="#6f7771";
+  ctx.fillText(STR.subtitle, W/2, H*0.46);
+  // controls card
+  const lines=[[STR.ctlMove,STR.ctlMoveKeys],[STR.ctlLight,STR.ctlLightKeys],
+    [STR.ctlHeavy,STR.ctlHeavyKeys],[STR.ctlDodge,STR.ctlDodgeKeys]];
+  ctx.font="14px monospace"; let yy=H*0.54;
+  for(const [l,r] of lines){ ctx.textAlign="right"; ctx.fillStyle="#9aa39c"; ctx.fillText(l, W/2-14, yy);
+    ctx.textAlign="left"; ctx.fillStyle="#6f7771"; ctx.fillText(r, W/2+14, yy); yy+=24; }
+  ctx.textAlign="center"; ctx.fillStyle="#5d655f"; ctx.font="italic 13px serif"; ctx.fillText(STR.ctlHint,W/2,yy+6);
+  const blink = (Math.sin(titleT*3)+1)/2;
+  ctx.globalAlpha=a*(0.4+blink*0.6); ctx.fillStyle="#cdbb86"; ctx.font="20px 'Times New Roman',serif";
+  ctx.fillText(STR.start, W/2, H*0.8);
+  ctx.globalAlpha=a; ctx.fillStyle="#5d655f"; ctx.font="13px monospace"; ctx.fillText(STR.startSub,W/2,H*0.8+30);
+  ctx.restore(); ctx.textAlign="left"; ctx.globalAlpha=1;
+}
+function drawEnd(title,subs,col){ ctx.save(); ctx.fillStyle="rgba(4,5,6,.74)"; ctx.fillRect(0,0,W,H);
+  const a=clamp(endT/1.2,0,1); ctx.globalAlpha=a; ctx.textAlign="center";
+  ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=16; ctx.font=`${Math.min(56,W*0.08)}px 'Times New Roman',serif`;
+  ctx.fillText(title,W/2,H*0.34); ctx.shadowBlur=0;
+  ctx.fillStyle="#9aa39c"; ctx.font="16px monospace"; let yy=H*0.5;
+  for(const s of subs){ ctx.fillText(s,W/2,yy); yy+=26; }
+  ctx.restore(); ctx.textAlign="left"; ctx.globalAlpha=1; }
+function drawWin(){ drawEnd(STR.winTitle,[STR.winLine1,STR.winLine2,STR.winLine3,"",STR.winSub],"#cdbb86");
+  ctx.save(); ctx.textAlign="center"; ctx.fillStyle="#6f6276"; ctx.font="italic 14px serif";
+  ctx.fillText(STR.bossEpitaph, W/2, H*0.66); ctx.restore(); ctx.textAlign="left"; }
+
+// ───────────────────────────── state + loop ─────────────────────────────────
+let state="title", paused=false, titleT=0, endT=0;
+function setState(s){ state=s; endT=0; if(s==="title") titleT=0; }
+
+let acc=0,last=performance.now(),frames=0,fpsAt=last,fps=0;
+addEventListener("blur",()=>paused=true);
+addEventListener("focus",()=>{ last=performance.now(); });
+const dev=new URLSearchParams(location.search).has("dev");
+if(dev) document.getElementById("dev").style.display="block";
+
+function frame(now){
+  requestAnimationFrame(frame);
+  let elapsed=now-last; last=now; if(elapsed>250) elapsed=250;
+  acc+=elapsed;
+  while(acc>=STEP){ update(STEP); acc-=STEP; }
+  render();
+  if(dev){ frames++; if(now-fpsAt>=500){ fps=Math.round(frames*1000/(now-fpsAt)); frames=0; fpsAt=now;
+    document.getElementById("dev").textContent=fps+" fps · ent "+(enemies?enemies.length:0)+" · cam "+(cam|0); } }
+}
+
+// boot
+Promise.all([...PLAIN.map(loadPlain), ...SPRITES.map(loadSprite)]).then(()=>{ requestAnimationFrame(frame); });
+</script>
+</body>
+</html>
