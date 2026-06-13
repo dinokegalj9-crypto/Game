@@ -4,6 +4,12 @@ This document describes how *The Hollow Crown*'s code is organized and the princ
 keep it scalable. It is the counterpart to the [Design Bible](DesignBible.md): the bible
 says *what* and *why*; this says *how*.
 
+> **For the full AAA-grade technical specification** — module/plugin topology, all 23
+> system architectures, dependency/class/data-flow diagrams, the event bus, save
+> architecture, performance & scalability strategy, multiplayer-readiness, and the
+> engineering roadmap — see [**TechnicalArchitecture.md**](TechnicalArchitecture.md). This
+> page is the one-page orientation; that document is the depth.
+
 ---
 
 ## 1. Guiding Principles
