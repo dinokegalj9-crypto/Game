@@ -148,6 +148,10 @@ A boss is only "done" when all four are wired up. See
 [`Systems/CombatSystem.md`](Systems/CombatSystem.md) and
 [`Systems/CorruptionSystem.md`](Systems/CorruptionSystem.md).
 
+The full roster — **the Twelve Lords**, each a fallen human tragedy with its own visual,
+narrative, mechanical, arena, audio, and emotional identity — is the
+[**Boss Bible**](BossBible.md).
+
 ---
 
 ## 8. Corruption System (signature mechanic)

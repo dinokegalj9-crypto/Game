@@ -13,6 +13,7 @@ meshes, materials) is authored in-editor and tracked via Git LFS.
 
 - **Creative source of truth:** [`Docs/DesignBible.md`](Docs/DesignBible.md)
 - **Visual source of truth (art direction):** [`Docs/ArtBible.md`](Docs/ArtBible.md)
+- **Boss source of truth (the Twelve Lords):** [`Docs/BossBible.md`](Docs/BossBible.md)
 - **Technical source of truth:** [`Docs/Architecture.md`](Docs/Architecture.md) (overview)
   → [`Docs/TechnicalArchitecture.md`](Docs/TechnicalArchitecture.md) (full AAA spec)
 - **Project structure & pipeline:** [`Docs/ProjectStructure.md`](Docs/ProjectStructure.md)

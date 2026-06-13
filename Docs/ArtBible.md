@@ -328,6 +328,9 @@ majors. The closer to the Crown, the more the gold and the wrongness show.
 
 ## 10. Boss Design Guide
 
+> The six-axis framework below is *realized* for the full roster — the Twelve Lords — in the
+> [**Boss Bible**](BossBible.md), including each Lord's silhouette, color, and arena identity.
+
 The player must **remember every boss** and never confuse two. Enforce variety with a
 **six-axis identity framework** — each major boss must be deliberately differentiated on
 all six, and no two bosses may share the same dominant choice on more than two axes.
