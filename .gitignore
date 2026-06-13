@@ -1,0 +1,54 @@
+# Unreal Engine 5 .gitignore for The Hollow Crown
+# ------------------------------------------------------------------
+# Generated / transient directories
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+.vscode/
+.idea/
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+*.obj
+*.pdb
+*.lib
+*.app
+
+# Generated project files
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.xcodeproj
+*.xcworkspace
+
+# Unreal generated config that should not be committed
+Saved/Config/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Crash logs
+*.log
+*.stackdump
+
+# Large binary content is tracked via Git LFS in production.
+# Uncomment the line below if NOT using LFS to avoid committing binary assets.
+# Content/
+
+# NOTE: Content/ (umap, uasset) is intentionally NOT ignored so that
+# committed binary assets are tracked. Configure Git LFS before adding them:
+#   git lfs track "*.uasset"
+#   git lfs track "*.umap"
