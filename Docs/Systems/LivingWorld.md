@@ -6,6 +6,8 @@
 > **this document defines the target**. Built on the simulation services in
 > [`../TechnicalArchitecture.md`](../TechnicalArchitecture.md) §2.8–§2.9, §2.15, §2.21–§2.22.
 > **Scope:** simulation & narrative *design* only — not code, not authored quest/lore content.
+> **The narrative layer on top of this simulation** — how its emergent problems become framed,
+> choice-driven, consequential stories — is [`QuestDesign.md`](QuestDesign.md).
 
 > Tuning numbers are first-pass targets to validate in the simulation gym (one fully
 > resident village), per the project's "numbers before code" rule.

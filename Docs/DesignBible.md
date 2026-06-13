@@ -93,6 +93,11 @@ Expand Settlement → Defeat Boss → World Changes → Unlock New Region → (r
 The loop is regional. Each region culminates in a boss whose death reshapes the world,
 grants a new ability, advances corruption, and opens the path onward.
 
+The narrative engagement layer — how the world's problems become emotionally powerful,
+choice-driven, consequential stories (never tasks or filler) — is designed in
+[`Systems/QuestDesign.md`](Systems/QuestDesign.md), built atop the simulation in
+[`Systems/LivingWorld.md`](Systems/LivingWorld.md).
+
 ---
 
 ## 5. Visual Direction
