@@ -3,6 +3,12 @@
 **Owner type:** `UHCCombatComponent` (in `Source/HollowCrown/Combat/`)
 **Pillar:** Meaningful Progression. **Feel:** heavy, grounded, dangerous — never arcade.
 
+> **This page is the implementation contract** (components, data, events). The combat
+> *design* source of truth — feel, rules, the three-resource triangle, Guard/Poise,
+> Perfect Deflect, Momentum, Fear, boss exams, skill ceiling — is
+> [**CombatDesign.md**](CombatDesign.md). Where the two differ, the design doc defines the
+> target and this contract is updated to match it.
+
 ---
 
 ## Design Intent

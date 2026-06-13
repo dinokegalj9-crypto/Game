@@ -193,7 +193,12 @@ Core actions: Light Attack, Heavy Attack, Block, Parry, Dodge, Sprint, Charged A
 Execution, and a Stagger system.
 
 Weapon classes: Sword, Axe, Spear, Greatsword, Hammer, Torch (more in later expansions).
-Full design in [`Systems/CombatSystem.md`](Systems/CombatSystem.md).
+
+The full combat **design** — the three-resource triangle (Health/Stamina/Guard), the
+Guard and Poise systems, the Perfect Deflect, the signature **Momentum** mechanic, the Fear
+system, boss mastery-exams, and the skill ceiling — is in
+[`Systems/CombatDesign.md`](Systems/CombatDesign.md); the implementation contract is
+[`Systems/CombatSystem.md`](Systems/CombatSystem.md).
 
 ---
 
