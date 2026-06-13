@@ -3,6 +3,12 @@
 **Owner types:** `AHCNPCBase` + `UHCScheduleComponent` (in `Source/HollowCrown/AI/`)
 **Pillar:** Living World — *NPCs live independently.*
 
+> **This page is the implementation contract** for a single NPC's components. The living-world
+> *design* source of truth — the simulation philosophy, needs/emergence engine, memory,
+> relationships, death & grief, settlement evolution, reputation propagation, corruption
+> reactions, factions, and world memory — is [**LivingWorld.md**](LivingWorld.md). Where the
+> two differ, the design doc defines the target.
+
 ---
 
 ## Design Intent

@@ -181,7 +181,13 @@ collapse**. Full design in [`Systems/SettlementSystem.md`](Systems/SettlementSys
 
 Every NPC has a name, age, occupation, schedule, relationships, personality, goals, and
 fears. NPCs sleep, eat, work, travel, and react to weather, danger, corruption, and the
-player's actions. Full design in [`Systems/NPCSystem.md`](Systems/NPCSystem.md).
+player's actions.
+
+The full **living-world** design — the simulation philosophy ("the world exists when I am
+not here"), the needs/emergence engine, NPC memory, relationships, permanent death and
+grief, settlement evolution, multi-layer reputation, faction simulation, and world memory —
+is in [`Systems/LivingWorld.md`](Systems/LivingWorld.md); the per-NPC implementation
+contract is [`Systems/NPCSystem.md`](Systems/NPCSystem.md).
 
 ---
 

@@ -4,6 +4,10 @@
 (in `Source/HollowCrown/Settlement/`)
 **Pillar:** Kingdom Building — *the player builds a civilization, not a house.*
 
+> The *living* side of settlements — population dynamics, recruitment of people (not units),
+> emergent events, death & grief, prosperity/decline, and attachment — is designed in
+> [**LivingWorld.md**](LivingWorld.md). This page covers the building/economy structure.
+
 ---
 
 ## Design Intent
