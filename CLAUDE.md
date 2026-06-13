@@ -14,6 +14,8 @@ meshes, materials) is authored in-editor and tracked via Git LFS.
 - **Creative source of truth:** [`Docs/DesignBible.md`](Docs/DesignBible.md)
 - **Technical source of truth:** [`Docs/Architecture.md`](Docs/Architecture.md) (overview)
   → [`Docs/TechnicalArchitecture.md`](Docs/TechnicalArchitecture.md) (full AAA spec)
+- **Project structure & pipeline:** [`Docs/ProjectStructure.md`](Docs/ProjectStructure.md)
+  (folder layout, naming/prefixes, source control, region & boss workflows)
 - **What to build next:** [`Docs/Roadmap.md`](Docs/Roadmap.md)
 - **Per-system design:** [`Docs/Systems/`](Docs/Systems)
 - **Code:** [`Source/HollowCrown/`](Source/HollowCrown) (one folder per domain)

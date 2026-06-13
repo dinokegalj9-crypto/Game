@@ -2,10 +2,15 @@
 # ------------------------------------------------------------------
 # Generated / transient directories
 Binaries/
-Build/
 DerivedDataCache/
 Intermediate/
 Saved/
+
+# Build/ holds TRACKED packaging resources (icons, scripts, platform files) — see
+# Docs/ProjectStructure.md §1. Only its generated subpaths are ignored:
+Build/Receipts/
+Build/*/Cooked/
+Build/*/Staged/
 .vs/
 .vscode/
 .idea/
