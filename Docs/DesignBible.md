@@ -182,7 +182,13 @@ Full mechanics in [`Systems/CorruptionSystem.md`](Systems/CorruptionSystem.md).
 Players begin with a **campfire, tent, and storage**, and over time unlock homes,
 blacksmiths, churches, walls, towers, markets, barracks, libraries, and castle
 structures. A settlement attracts NPCs, generates resources, and can **prosper or
-collapse**. Full design in [`Systems/SettlementSystem.md`](Systems/SettlementSystem.md).
+collapse**.
+
+The full settlement-as-legacy design — founding, the progression tiers, buildings that need
+people, specialists, morale, crime, internal politics and faith, world reaction, the
+corruption mirror, and the legacy chronicle ("I built this") — is in
+[`Systems/SettlementDesign.md`](Systems/SettlementDesign.md); the implementation contract is
+[`Systems/SettlementSystem.md`](Systems/SettlementSystem.md).
 
 ---
 

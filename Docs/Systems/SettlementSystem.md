@@ -6,7 +6,10 @@
 
 > The *living* side of settlements — population dynamics, recruitment of people (not units),
 > emergent events, death & grief, prosperity/decline, and attachment — is designed in
-> [**LivingWorld.md**](LivingWorld.md). This page covers the building/economy structure.
+> [**LivingWorld.md**](LivingWorld.md). The settlement-as-home/legacy design — founding,
+> progression tiers, buildings-need-people, specialists, morale, crime, internal politics &
+> faith, world reaction, the corruption mirror, and the legacy chronicle — is
+> [**SettlementDesign.md**](SettlementDesign.md). This page covers the building/economy structure.
 
 ---
 

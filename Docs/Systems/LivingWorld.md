@@ -355,6 +355,10 @@ tiers, §3):
 
 ## 14. Settlement Management & Recruitment
 
+> The full settlement-as-home/legacy design (founding, progression tiers, buildings,
+> specialists, morale, crime, internal politics, the corruption mirror, and the legacy
+> chronicle) is [**SettlementDesign.md**](SettlementDesign.md).
+
 The player builds a settlement by **recruiting survivors — people, never generic citizens.**
 
 - **Every recruit is an individual** with strengths, weaknesses, traits, skills, a **history**,
