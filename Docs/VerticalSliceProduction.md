@@ -9,6 +9,10 @@
 > [`BossBible.md`](BossBible.md), [`ArtBible.md`](ArtBible.md), [`TechnicalArchitecture.md`](TechnicalArchitecture.md),
 > [`ProjectStructure.md`](ProjectStructure.md). Supersedes the slice portion of [`Roadmap.md`](Roadmap.md).
 > **Goal:** detailed enough that **development can begin the day this is read.**
+> **Pair this with the [Feasibility & Risk Analysis](FeasibilityAnalysis.md)** — the blunt
+> assessment of what is solo-achievable, the top project killers, and the Minimum Viable Version.
+> This blueprint builds the slice; that document explains why the slice (and the MVV beyond it),
+> not the full vision, is the realistic path to shipping.
 
 ---
 

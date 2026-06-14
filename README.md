@@ -78,3 +78,10 @@ Source/HollowCrown/      C++ game module
 Start with the [**Design Bible**](Docs/DesignBible.md) for the creative vision, then the
 [**Architecture**](Docs/Architecture.md) for how the code is organized. Each system has a
 dedicated document under [`Docs/Systems/`](Docs/Systems).
+
+> **Before committing to a build plan, read the
+> [Feasibility & Risk Analysis](Docs/FeasibilityAnalysis.md).** It is a deliberately blunt
+> reality check: the full design is a funded-studio, multi-year effort, not a solo build. The
+> realistic path to shipping is the [Minimum Viable Version](Docs/FeasibilityAnalysis.md#14--minimum-viable-version--the-smallest-hollow-crown-that-is-still-the-hollow-crown)
+> and the [Vertical Slice Production blueprint](Docs/VerticalSliceProduction.md) — *ship small,
+> earn the right to build big.*
