@@ -401,7 +401,8 @@ the whole project.
 
 1. Install UE 5.6; generate project files from `HollowCrown.uproject`; build the editor target
    (resolve the M0 first-compile fixups, `Roadmap.md`).
-2. Create the **combat gym** map (`Content/Testing/Maps/L_Test_CombatGym`).
+2. Create the **combat gym** map (`Content/Testing/Maps/L_Test_CombatGym`). Step-by-step:
+   [`GymSetup.md`](GymSetup.md) (uses the C++ classes + the gym glue already in the repo).
 3. Acquire the **base animation pack + a humanoid enemy + the sword** (§8–§9) so the gym has
    something to feel.
 4. Wire the player controller + attribute + combat component (repo scaffold) and **start
