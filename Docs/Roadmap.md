@@ -3,6 +3,12 @@
 Milestones toward the Phase 1 vertical slice and beyond. Each milestone lists its exit
 criteria — the slice is "done" when M4's criteria are met.
 
+> **For the detailed, build-ready production blueprint of the vertical slice** — region,
+> settlement, NPC/enemy rosters, the slice-version of every system, acquire-vs-make asset
+> lists, the five production phases, time estimates, risks, and the definition of done — see
+> [**VerticalSliceProduction.md**](VerticalSliceProduction.md). This page is the milestone
+> overview; that document is the production plan.
+
 ---
 
 ## M0 — Foundation *(current)*

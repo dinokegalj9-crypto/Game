@@ -21,6 +21,7 @@ meshes, materials) is authored in-editor and tracked via Git LFS.
 - **Project structure & pipeline:** [`Docs/ProjectStructure.md`](Docs/ProjectStructure.md)
   (folder layout, naming/prefixes, source control, region & boss workflows)
 - **What to build next:** [`Docs/Roadmap.md`](Docs/Roadmap.md)
+  → [`Docs/VerticalSliceProduction.md`](Docs/VerticalSliceProduction.md) (build-ready slice plan)
 - **Per-system design:** [`Docs/Systems/`](Docs/Systems)
 - **Code:** [`Source/HollowCrown/`](Source/HollowCrown) (one folder per domain)
 

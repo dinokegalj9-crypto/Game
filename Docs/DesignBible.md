@@ -261,6 +261,10 @@ potential. Must include:
 
 Target quality: a Steam demo that immediately reads as ambitious and special.
 
+The build-ready production plan for this slice — scope cuts, region/settlement/roster designs,
+asset strategy, phases, time estimates, and the definition of done — is
+[`VerticalSliceProduction.md`](VerticalSliceProduction.md).
+
 ---
 
 ## 16. Ultimate Goal
