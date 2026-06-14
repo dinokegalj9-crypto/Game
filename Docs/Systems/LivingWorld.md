@@ -432,6 +432,11 @@ influence**, and a **regional influence** value that rises and falls.
 Examples (structure, not lore): *Church of the Last Dawn · The Blackwood Hunters · Ashbourne
 Nobility · Drowned Brotherhood · Silent Clergy · Crown-Touched Cult.*
 
+> The factions themselves — their beliefs, history, leadership, secrets, the religion and
+> heresies, the noble houses, propaganda, espionage, faction warfare, and the political path
+> to the endings — are designed in the [**Faction Bible**](../FactionBible.md). This section
+> is the *simulation* of factions; that document is *who they are.*
+
 - **Factions pursue goals** (expand influence, control a region, suppress a rival, spread/resist
   corruption) — generating faction-level emergent events (raids, ceremonies, power struggles,
   pilgrimages) that flow down into settlements and encounters.

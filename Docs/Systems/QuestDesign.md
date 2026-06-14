@@ -271,7 +271,8 @@ most personal stories.
 
 ## 12. Faction Threads
 
-Faction Threads arise from **faction goals advancing** (`LivingWorld.md`§17). Structures:
+Faction Threads arise from **faction goals advancing** (`LivingWorld.md`§17); the factions, their
+beliefs, secrets, and political web are the [**Faction Bible**](../FactionBible.md). Structures:
 
 - **Alliances** — earn a faction's trust through aligned action; alliance grants resources/
   passage but *binds* you (their enemies become yours).
