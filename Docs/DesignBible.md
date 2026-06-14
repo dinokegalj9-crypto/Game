@@ -268,3 +268,8 @@ Target quality: a Steam demo that immediately reads as ambitious and special.
 A world players remember years later — ancient, beautiful, tragic, mysterious, and alive.
 Every design decision should reinforce those five feelings. When in doubt, choose the
 option that makes the world feel more *haunted and more believable*.
+
+The complete **player journey** — the emotional arc from the first five minutes to the final
+ending, binding combat, the living world, quests, bosses, factions, settlement, and
+corruption into one lived experience — is mapped in [`PlayerJourney.md`](PlayerJourney.md).
+It is the spine that keeps every system pulling toward the same feeling.

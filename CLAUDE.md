@@ -12,6 +12,7 @@ meshes, materials) is authored in-editor and tracked via Git LFS.
 ## Where things live
 
 - **Creative source of truth:** [`Docs/DesignBible.md`](Docs/DesignBible.md)
+- **Player-experience spine (the emotional journey):** [`Docs/PlayerJourney.md`](Docs/PlayerJourney.md)
 - **Visual source of truth (art direction):** [`Docs/ArtBible.md`](Docs/ArtBible.md)
 - **Boss source of truth (the Twelve Lords):** [`Docs/BossBible.md`](Docs/BossBible.md)
 - **Politics & religion source of truth (factions):** [`Docs/FactionBible.md`](Docs/FactionBible.md)
